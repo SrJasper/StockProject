@@ -14,7 +14,7 @@ model User {
   password String
 }
 
-model Product {
+model Stock {
   id             Int      @id @default(autoincrement())
   operationDate  DateTime @default(now())
   symbol         String
