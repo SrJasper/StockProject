@@ -39,24 +39,6 @@ export class UsersService {
     }    
   }
 
-  //Metodo a ser deletada
-  async findAll() {
-    const users = this.databaseService.user.findMany();
-    if(!users) {
-      throw new BadRequestException('Nenhum usuário cadastrado.');
-    } else {
-      return users;
-    }
-  }
-  
-  async findOne(id: number) {       
-    const userDB = await this.databaseService.user.findUnique({ where: {id}} );
-    if(userDB){ 
-      return userDB;
-    } else {
-      throw new BadRequestException('Usuário não encontrado');
-    }
-  }
 
   /*
   @Body
@@ -86,8 +68,8 @@ export class UsersService {
     }
   }
 
-  //metodo a ser deletada
   async remove(id: number) {
+    console.log('entrou');
     const userDb = await this.databaseService.user.findUnique({ where: {id}} );
 
     if(userDb){

@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Param, Req, Body, Delete, BadRequestException} from '@nestjs/common';
-import { StocksService } from './stocks.service';
-import { CreateStockDto } from './dto/create-stock.dto';
-import { Request } from 'express';
+import { RegisterStockDto } from './dto/register-stock.dto';
+import { SimStockDto } from './dto/simulation-stock.dto';
 import { SelectStockDto } from './dto/select-stock.dto';
 import { SellStockDto } from './dto/sell-stock.dto';
+import { StocksService } from './stocks.service';
+import { Request } from 'express';
    
 @Controller('stocks')
 export class StocksController {
@@ -15,49 +16,10 @@ export class StocksController {
     return stockInfo;    
   }
 
-  @Post(':symbol')
-  async buyStock(
-    @Body() createStockDto: CreateStockDto,
-    @Param('symbol') symbol: string,
-    @Req()req: Request
-  ) {
-    const stockBought = await this.stocksService.buyStock(createStockDto, symbol, req.user);
-    return stockBought;
-  }
-
-  @Delete()
-  async sellStock(
-    @Req()req: Request,
-    @Body() stockInfo: SellStockDto
-  ) {
-    const stocSold = await this.stocksService.sellStock(req.user, stockInfo)
-    return stocSold;
-  }
-
-  @Delete('del')
-  async deleteSim (
-    @Req()req: Request,
-    @Body() id: SelectStockDto
-  ) {
-    const simDeleted = await this.stocksService.deleteSimStock(req.user, id)
-    return simDeleted;
-  }
-
-  @Delete('all')
-  async clearUserStocks(@Req()req: Request){
-    const clearUser = await this.stocksService.clearUserStocks(req.user);
-    return clearUser;
-  }
-
-  @Get('listall')
-  async listStocks(@Req()req: Request){
-    try {
-      const listaAll = await this.stocksService.listStocks(req.user);
-      return listaAll;
-    } catch (error) {
-      throw new BadRequestException('Deu um erro escroto');
-    }
-    
+  @Get('/search/inf/:value')
+  async findInf(@Param('value') value: number){
+    const inflationInfo = await this.stocksService.serviceToFindInflation(value);
+    return inflationInfo;
   }
 
   @Get('list/:symbol')
@@ -68,11 +30,69 @@ export class StocksController {
     return listBySymbol;
   }
 
-  /*
-  @Get('test')
-  async testPython(){
-    const testResult = await this.stocksService.testPython();
-    return testResult;
+  @Get('listall')
+  async listStocks(@Req()req: Request){
+    try {
+      const listaAll = await this.stocksService.listStocks(req.user);
+      return listaAll;
+    } catch (error) {
+      throw new BadRequestException('Deu um erro escroto');
+    }    
   }
-  */
+
+  @Post('/regsim')
+  async registerStock(
+    @Body() registerStockDto: RegisterStockDto,
+    @Req()req: Request
+  ) {
+    const stockRegister = await this.stocksService.registerStock(registerStockDto, req.user);
+    return stockRegister;
+  }
+
+  @Post('/newsim')
+  async simStock(
+    @Body() simStockDto: SimStockDto,
+    @Req()req: Request
+  ) {
+    const stockBought = await this.stocksService.simStock(simStockDto, req.user);
+    return stockBought;
+  }
+
+  // @Post(':symbol')
+  // async simStock(
+  //   @Body() simStockDto: SimStockDto,
+  //   @Param('symbol') symbol: string,
+  //   @Req()req: Request
+  // ) {
+  //   console.log('Entrou na rota 2');
+  //   const stockBought = await this.stocksService.simStock(simStockDto, symbol, req.user);
+  //   return stockBought;
+  // }
+
+  @Delete('/sell')
+  async sellStock(
+    @Req()req: Request,
+    @Body() stockInfo: SellStockDto
+  ) {
+    console.log('Entrou em sell');
+    const stocSold = await this.stocksService.sellStock(req.user, stockInfo)
+    return stocSold;
+  }
+
+  @Delete('/del')
+  async deleteSim (
+    @Req()req: Request,
+    @Body() id: SelectStockDto
+  ) {
+    console.log('Entrou na rota del');
+    const simDeleted = await this.stocksService.deleteStock(req.user, id)
+    return simDeleted;
+  }
+
+  @Delete('/all')
+  async clearUserStocks(@Req()req: Request){
+    console.log('Entrou na rota delete all');
+    const clearUser = await this.stocksService.clearUserStocks(req.user);
+    return clearUser;
+  }
 }
