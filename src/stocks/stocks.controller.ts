@@ -31,12 +31,12 @@ export class StocksController {
   }
 
   @Get('listall')
-  async listStocks(@Req()req: Request){
+  async listStocks(@Req()req: Request,){
     try {
       const listaAll = await this.stocksService.listStocks(req.user);
       return listaAll;
     } catch (error) {
-      throw new BadRequestException('Deu um erro escroto');
+      throw new BadRequestException('Deu erro');
     }    
   }
 
@@ -69,13 +69,12 @@ export class StocksController {
   //   return stockBought;
   // }
 
-  @Delete('/sell')
+  @Get('/sell')
   async sellStock(
     @Req()req: Request,
     @Body() stockInfo: SellStockDto
   ) {
-    console.log('Entrou em sell');
-    const stocSold = await this.stocksService.sellStock(req.user, stockInfo)
+    const stocSold = await this.stocksService.sellStockInfo(req.user, stockInfo)
     return stocSold;
   }
 
@@ -84,14 +83,12 @@ export class StocksController {
     @Req()req: Request,
     @Body() id: SelectStockDto
   ) {
-    console.log('Entrou na rota del');
     const simDeleted = await this.stocksService.deleteStock(req.user, id)
     return simDeleted;
   }
 
   @Delete('/all')
   async clearUserStocks(@Req()req: Request){
-    console.log('Entrou na rota delete all');
     const clearUser = await this.stocksService.clearUserStocks(req.user);
     return clearUser;
   }

@@ -108,7 +108,7 @@ export class StocksService {
   venda: number
   proventos: number
   */
-  async sellStock(user:IUser, stockInfo:SellStockDto){
+  async sellStockInfo(user:IUser, stockInfo:SellStockDto){
     if(!user.id){
       throw new BadRequestException('Usuário não está logado');
     }
@@ -132,22 +132,22 @@ export class StocksService {
     let sellPrice: number;
     if(stockSoldInfo.simulation){ //da API
       const response = await findStockBr(stockSoldInfo.symbol);      
-      sellPrice = response.data.results[0];
+      sellPrice = (response.data.results[0].regularMarketPrice) * stockSoldInfo.qnt;
     } else {//do body
       sellPrice = stockInfo.sellPrice;
     }
-    console.log(sellPrice);
-
-    const profit = (sellPrice + stockInfo.provents - buyPriceCorrected);
-    const taxes = (sellPrice + stockInfo.provents - buyPriceCorrected) * 0.15;
+    
+    //const profit = (sellPrice + stockInfo.provents - buyPriceCorrected);
+    const taxes = (sellPrice - buyPriceCorrected) * 0.15;
+    const profit = (sellPrice - buyPriceCorrected - taxes);
 
     //É preciso completar esses dados
     const result = {
       paidPrice: buyPriceCorrected,
       sellPrice: sellPrice,
+      taxes: taxes,
       profit: profit,
-      proportionalProfit: (profit/buyPriceCorrected) - 1,
-      taxes: taxes
+      proportionalProfit: `${((profit / buyPriceCorrected) * 100).toFixed(2)}%`
     };
     
     return result;

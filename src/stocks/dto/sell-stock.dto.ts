@@ -10,9 +10,9 @@ export class SellStockDto {
 
   @IsOptional()
   @IsNumber({}, {message: 'Digite um valor de venda válido'})
-  provents: number;
+  provents: number = 0;
   
   @IsOptional()
   @IsDate({message: 'Digite o dia da venda'})
-  date: Date;
+  date: Date = new Date();
 }
