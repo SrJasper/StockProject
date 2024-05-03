@@ -3,7 +3,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { RegisterStockDto } from './dto/register-stock.dto';
 import { SimStockDto } from './dto/simulation-stock.dto';
-import { SelectStockDto } from './dto/select-stock.dto';
 import { SellStockDto } from './dto/sell-stock.dto';
 import { IUser } from 'src/interfaces/IUser';
 
@@ -124,15 +123,17 @@ export class StocksService {
     
     const buyPriceRaw = stockSoldInfo.price * stockSoldInfo.qnt;
     //metodo para corrigir o valor (compra)  EXEMPLO -----------------------------------------
-    const buyPriceCorrected = buyPriceRaw * 0.85;
+    const buyPriceCorrected = buyPriceRaw * 1.15;
     //----------------------------------------------------------------------------------------
     
     //Obtendo o valor de venda
       //Via simulação
     let sellPrice: number;
+    let singleSellPrice: number
     if(stockSoldInfo.simulation){ //da API
-      const response = await findStockBr(stockSoldInfo.symbol);      
-      sellPrice = (response.data.results[0].regularMarketPrice) * stockSoldInfo.qnt;
+      const response = await findStockBr(stockSoldInfo.symbol);  
+      singleSellPrice = (response.data.results[0].regularMarketPrice);
+      sellPrice = singleSellPrice * stockSoldInfo.qnt;
     } else {//do body
       sellPrice = stockInfo.sellPrice;
     }
@@ -143,9 +144,13 @@ export class StocksService {
 
     //É preciso completar esses dados
     const result = {
+      stockName: stockSoldInfo.longName,
+      stockSymbol: stockSoldInfo.symbol,
+      paidPriceSingle: stockSoldInfo.price,
       paidPrice: buyPriceCorrected,
+      sellPriceSingle: singleSellPrice,
       sellPrice: sellPrice,
-      taxes: taxes,
+      taxes: (taxes),
       profit: profit,
       proportionalProfit: `${((profit / buyPriceCorrected) * 100).toFixed(2)}%`
     };
@@ -153,17 +158,32 @@ export class StocksService {
     return result;
   }
 
+  async deleteOneStock(user:IUser, id: string){
+    if(!user.id){
+      throw new BadRequestException('Usuário não está logado');
+    }
+    const product = await this.databaseService.stock.findUnique({ where: { id:parseInt(id)} });
+    console.log(product);
+    if(product){
+      await this.databaseService.stock.delete({ where: {id:parseInt(id)} });   
+    } else{
+      return 'Não deu bom não';
+    }
+    return 'A simulção foi deletada';
+  }
+
   //Deleta uma simulação
-  async deleteStock(user:IUser, selectStock:SelectStockDto){
+  async deleteAllStocks(user:IUser){
     if(!user.id){
       throw new BadRequestException('Usuário não está logado');
     }
     await this.databaseService.stock.deleteMany({ where: {
-      id: selectStock.id,
       ownerId: user.id
     }});
     return 'A simulção foi deletada'
   }
+
+  
 
   //Deleta todas as simulações
   async clearUserStocks(user: IUser){
@@ -171,7 +191,7 @@ export class StocksService {
       throw new BadRequestException('Usuário não está logado');
     }
     try {      
-      await this.databaseService.stock.deleteMany({ where: { ownerId: user.id } });
+      await this.databaseService.stock.deleteMany({});
       return 'As simulações desse usuário foram deletadas'
     } catch (error) {
       throw new BadRequestException('Não foi possivel deletar as simulações desse usuário');      

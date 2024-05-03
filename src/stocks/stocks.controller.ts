@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Param, Req, Body, Delete, BadRequestException} from '@nestjs/common';
 import { RegisterStockDto } from './dto/register-stock.dto';
 import { SimStockDto } from './dto/simulation-stock.dto';
-import { SelectStockDto } from './dto/select-stock.dto';
 import { SellStockDto } from './dto/sell-stock.dto';
 import { StocksService } from './stocks.service';
 import { Request } from 'express';
@@ -69,7 +68,7 @@ export class StocksController {
   //   return stockBought;
   // }
 
-  @Get('/sell')
+  @Post('/sell')
   async sellStock(
     @Req()req: Request,
     @Body() stockInfo: SellStockDto
@@ -78,12 +77,22 @@ export class StocksController {
     return stocSold;
   }
 
-  @Delete('/del')
-  async deleteSim (
+  @Delete('/delone/:id')
+  async deleteStock (
     @Req()req: Request,
-    @Body() id: SelectStockDto
+    @Param('id') id: string
   ) {
-    const simDeleted = await this.stocksService.deleteStock(req.user, id)
+    console.log('Entrou no lugar certo');
+    const simDeleted = await this.stocksService.deleteOneStock(req.user, id)
+    return simDeleted;
+  }
+
+  @Delete('/dellall')
+  async deleteAllSims (
+    @Req()req: Request
+  ) {
+    console.log('Entrou no lugar errado');
+    const simDeleted = await this.stocksService.deleteAllStocks(req.user)
     return simDeleted;
   }
 
