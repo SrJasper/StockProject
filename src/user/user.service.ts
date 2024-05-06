@@ -9,13 +9,14 @@ import { IUser } from 'src/interfaces/IUser';
 export class UsersService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  /*
-  @Body
-  name
-  email
-  password
-  passwordConfirmation
-  */
+  async userInfo (user: IUser){
+    const userData = {
+      name: user.name,
+      email: user.email
+    }
+    return (userData);
+  }
+
   async create(createUserDto: CreateUserDto) {
     const { confirmPassword, ...userData } = createUserDto;
 

@@ -1,4 +1,4 @@
-import { Controller, Post,  Body,  Patch,  Param,  Delete, Req} from '@nestjs/common';
+import { Controller, Post,  Body,  Patch,  Param,  Delete, Req, Get, BadRequestException} from '@nestjs/common';
 import { UsersService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,6 +7,16 @@ import { Request } from 'express';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('info')
+  async userInfo(@Req()req: Request,){
+    try {
+      const listaAll = await this.usersService.userInfo(req.user);
+      return listaAll;
+    } catch (error) {
+      throw new BadRequestException('Deu erro');
+    }    
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
