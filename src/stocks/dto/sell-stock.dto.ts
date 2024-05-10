@@ -1,7 +1,6 @@
 import { IsDate, IsNumber, IsOptional } from "class-validator"
 
 export class SellStockDto {
-  @IsNumber({}, {message: 'id não encontrado'})
   id: number;
 
   @IsOptional()

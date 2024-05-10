@@ -62,7 +62,7 @@ export class StocksService {
           price: registerStockDto.price,
           longName: registerStockDto.longName,
           //date: registerStockDto.date,
-          simulation: true
+          simulation: false
         }
       });
       return newStock;

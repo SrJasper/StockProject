@@ -1,22 +1,24 @@
+import { BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
 export async function findStockBr(symbol:string): Promise <any> {
   const brapiKey = process.env.BRAPI_KEY;
-  const response = await axios.get(`https://brapi.dev/api/quote/${symbol}?token=${brapiKey}`);
-  return response;
+  try {    
+    const response = await axios.get(`https://brapi.dev/api/quote/${symbol}?token=${brapiKey}`);
+    return response;
+  } catch (error) {
+    throw new BadRequestException ('Símbolo não encontrado');
+  }
 }
 
-export async function findInflation(date1: Date, date2: Date){
-  const brapiKey = process.env.BRAPI_KEY;
-  const formattedDate1 = date1.toISOString().split('T')[0];
-  const formattedDate2 = date2.toISOString().split('T')[0];
+export async function findInflation(date1raw: Date, date2raw: Date){
+  
+  return 'not implemented yet';
+}
 
-  try {
-    const response = await axios.get(`https://brapi.dev/api/v2/inflation?country=brazil&start=${formattedDate1}&end=${formattedDate2}&sortBy=date&sortOrder=desc&token=${brapiKey}`);
-    return response.data;
-  } catch (error) {
-    console.error('Erro ao obter dados de inflação:', error);
-    throw error;
-  }
+export function getDate(date: Date){
+  const dateParts = date.toISOString().split('T')[0].split('-');
+  const datefixed = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+  return datefixed;
 }
 
