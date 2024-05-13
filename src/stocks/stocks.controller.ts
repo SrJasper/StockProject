@@ -10,9 +10,9 @@ export class StocksController {
   constructor(private readonly stocksService: StocksService) {}
    
   @Get('/search/:symbol')
-  async findOne(@Param('symbol') symbol: string) {
+  async findOne(@Param('symbol') symbol: string) {    
     const stockInfo = await this.stocksService.findOne(symbol);
-    return stockInfo;    
+    return stockInfo; 
   }
 
   @Get('/search/inf/:value')

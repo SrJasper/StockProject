@@ -17,7 +17,7 @@ export class AuthController {
       const token = await this.authService.login(loginCredentials);
       return token;
     } catch (error) {
-      throw new BadRequestException('A entrada foi errada');
+      throw new BadRequestException(error.message);
     }
   }
 }

@@ -14,7 +14,7 @@ export class StocksService {
   async findOne(symbol: string) {
     const response = await findStockBr(symbol);
     if(!response){
-      throw new BadRequestException('Erro ao obter cotação');
+      throw new BadRequestException('Símbolo não encontrado');
     }
     const { regularMarketPrice } = response.data.results[0];
     const { longName } = response.data.results[0];
@@ -61,7 +61,7 @@ export class StocksService {
           qnt: registerStockDto.qnt,
           price: registerStockDto.price,
           longName: registerStockDto.longName,
-          //date: registerStockDto.date,
+          operationDate: registerStockDto.date,
           simulation: false
         }
       });
