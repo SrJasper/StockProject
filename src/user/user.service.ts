@@ -9,23 +9,28 @@ import { IUser } from 'src/interfaces/IUser';
 export class UsersService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async userInfo (user: IUser){
-    const userData = {
-      name: user.name,
-      email: user.email
+  async userInfo (user: string){
+    try {
+      const findUser = await this.databaseService.user.findUnique({ where: {email: user}} );
+      return findUser;
+    } catch (error) {
+      throw new BadRequestException('Usuário não encontrado');
     }
-    return (userData);
   }
 
   async create(createUserDto: CreateUserDto) {
     const { confirmPassword, ...userData } = createUserDto;
-
-    if (createUserDto.password !== confirmPassword) {
-      throw new BadRequestException('A senha e a confirmação de senha não coincidem.');
-    }
-
     const salt = await genSalt(10);
     const passHash = await hash(createUserDto.password, salt);
+
+    const newUser = await this.databaseService.user.findUnique({ where: {email: createUserDto.email}} );
+    if(newUser){
+      throw new BadRequestException('O e-mail colocado já está cadastrado');
+    } else{
+      if (createUserDto.password !== confirmPassword) {
+        throw new BadRequestException('A senha e a confirmação de senha não coincidem.');
+      }      
+    }
 
     try{
       const newUser = await this.databaseService.user.create({
@@ -36,7 +41,7 @@ export class UsersService {
       });
       return 'O usuário de ' + newUser.name + ' foi criado!';
     } catch{ 
-      throw new BadRequestException('O e-mail colocado já está cadastrado');
+      throw new BadRequestException('Houve um erro ao criar o usuário');
     }    
   }
 
@@ -70,7 +75,6 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    console.log('entrou');
     const userDb = await this.databaseService.user.findUnique({ where: {id}} );
 
     if(userDb){
