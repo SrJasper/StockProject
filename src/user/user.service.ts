@@ -9,9 +9,9 @@ import { IUser } from 'src/interfaces/IUser';
 export class UsersService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async userInfo (user: string){
+  async userInfo (user: IUser){
     try {
-      const findUser = await this.databaseService.user.findUnique({ where: {email: user}} );
+      const findUser = await this.databaseService.user.findUnique({ where: {id: user.id}} );
       return findUser;
     } catch (error) {
       throw new BadRequestException('Usuário não encontrado');

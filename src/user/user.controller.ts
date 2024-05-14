@@ -8,10 +8,10 @@ import { Request } from 'express';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('info/:user')
-  async userInfo(@Param('user') user:string){
+  @Get('info/')
+  async userInfo(@Req()req: Request,){
     try {
-      const listaOne = await this.usersService.userInfo(user);
+      const listaOne = await this.usersService.userInfo(req.user);
       return listaOne;
     } catch (error) {
       throw new BadRequestException('Deu erro');
