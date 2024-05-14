@@ -9,7 +9,7 @@ export class EmailService {
 
   constructor() {
     this.transporter = createTransport({
-      host: "smtp-mail@outlook.com",
+      host: 'smtp-mail.outlook.com',
       port: 587,
       secure: false,
       auth: {
