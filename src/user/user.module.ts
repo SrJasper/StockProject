@@ -3,7 +3,7 @@ import { UsersService } from './user.service';
 import { UsersController } from './user.controller';
 import { DatabaseModule } from 'src/database/database.module';
 import { AuthGuardMiddleware } from 'src/auth-guard/auth-guard.middleware';
-import { EmailService } from 'src/email.service';
+import { EmailService } from '../email.service';
 
 @Module({
   imports: [DatabaseModule],
