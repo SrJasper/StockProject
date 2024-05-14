@@ -10,9 +10,13 @@ export class StocksController {
   constructor(private readonly stocksService: StocksService) {}
    
   @Get('/search/:symbol')
-  async findOne(@Param('symbol') symbol: string) {    
-    const stockInfo = await this.stocksService.findOne(symbol);
-    return stockInfo; 
+  async findOne(@Param('symbol') symbol: string) {   
+    try {
+      const stockInfo = await this.stocksService.findOne(symbol);
+      return stockInfo; 
+    } catch (error) {
+      return 'not found';
+    } 
   }
 
   @Get('/search/inf/:value')
@@ -72,7 +76,7 @@ export class StocksController {
   async sellStock(
     @Req()req: Request,
     @Body() stockInfo: SellStockDto
-  ) {
+  ){
     const stocSold = await this.stocksService.sellStockInfo(req.user, stockInfo)
     return stocSold;
   }
@@ -82,7 +86,6 @@ export class StocksController {
     @Req()req: Request,
     @Param('id') id: string
   ) {
-    console.log('Entrou no lugar certo');
     const simDeleted = await this.stocksService.deleteOneStock(req.user, id)
     return simDeleted;
   }
@@ -91,7 +94,6 @@ export class StocksController {
   async deleteAllSims (
     @Req()req: Request
   ) {
-    console.log('Entrou no lugar errado');
     const simDeleted = await this.stocksService.deleteAllStocks(req.user)
     return simDeleted;
   }

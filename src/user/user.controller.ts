@@ -11,7 +11,6 @@ export class UsersController {
   @Get('info/:user')
   async userInfo(@Param('user') user:string){
     try {
-      console.log('Entrou certo');
       const listaOne = await this.usersService.userInfo(user);
       return listaOne;
     } catch (error) {
