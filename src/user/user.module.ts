@@ -12,6 +12,6 @@ import { EmailService } from '../email.service';
 })
 export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthGuardMiddleware).exclude({ path: "users", method: RequestMethod.POST }).forRoutes(UsersController)
+    consumer.apply(AuthGuardMiddleware).exclude({ path: "/users", method: RequestMethod.POST }, { path: "/users/recovery", method: RequestMethod.POST }).forRoutes(UsersController)
   }
 }
