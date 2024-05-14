@@ -22,6 +22,10 @@ export class UsersController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
+  @Post("/recovery")
+  recovery(@Body() createUserDto: UpdateUserDto ) {
+    return this.usersService.recovery(createUserDto);
+  }
 
   @Patch(':id')
   update(

@@ -3,14 +3,15 @@ import { UsersService } from './user.service';
 import { UsersController } from './user.controller';
 import { DatabaseModule } from 'src/database/database.module';
 import { AuthGuardMiddleware } from 'src/auth-guard/auth-guard.middleware';
+import { EmailService } from 'src/email.service';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, EmailService],
 })
 export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthGuardMiddleware).exclude({path: "users", method: RequestMethod.POST}).forRoutes(UsersController)
+    consumer.apply(AuthGuardMiddleware).exclude({ path: "users", method: RequestMethod.POST }).forRoutes(UsersController)
   }
 }
