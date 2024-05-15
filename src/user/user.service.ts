@@ -78,22 +78,31 @@ export class UsersService {
   role?: string
   admin?: boolean
   */
-  async update(id: number, updateUserDto: UpdateUserDto, user: IUser) {
-    console.log('user: ' + user.name);
-    if (updateUserDto.password) {
-      if (updateUserDto.password !== updateUserDto.confirmPassword) {
-        throw new BadRequestException('As senhas devem ser iguais para alterá-las');
-      }
+  async update(updateUserDto: UpdateUserDto, user: IUser) {
+    if(!user){
+      throw new BadRequestException('Usuário não encontrado');
     }
-    const userDB = await this.databaseService.user.findUnique({ where: { id } });
+
+    let userName: string;
+    console.log(updateUserDto.name);
+    if(updateUserDto.name){
+      userName = updateUserDto.name;
+    } else{ 
+      userName = user.name;
+    }
+    
+    const userDB = await this.databaseService.user.findUnique({ where: { id: user.id } });
     if (userDB) {
+      const salt = await genSalt(10);
+      const passHash = await hash(updateUserDto.password, salt);
       await this.databaseService.user.update({
-        where: { id },
+        where: { id: user.id },
         data: {
-          ...updateUserDto,
+          name: userName,
+          password: passHash,
         },
       });
-      return 'O seu usuário foi alterado, ' + updateUserDto.name;
+      return 'O seu usuário foi alterado\n' + updateUserDto.name;
     } else {
       throw new BadRequestException('O usuário não foi encontrado');
     }

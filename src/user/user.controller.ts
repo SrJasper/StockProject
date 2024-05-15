@@ -22,17 +22,17 @@ export class UsersController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
+
   @Post("/recovery")
   recovery(@Body() createUserDto: UpdateUserDto ) {
     return this.usersService.recovery(createUserDto);
   }
 
-  @Patch(':id')
+  @Patch('/patch')
   update(
-    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto, @Req() req: Request
   ) {    
-    return this.usersService.update(+id, updateUserDto, req.user);
+    return this.usersService.update(updateUserDto, req.user);
   }
 
   @Delete(':id')
