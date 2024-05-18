@@ -152,12 +152,12 @@ export class StocksService {
     const result = {
       stockName: stockSoldInfo.longName,
       stockSymbol: stockSoldInfo.symbol,
-      paidPriceSingle: stockSoldInfo.price.toFixed(2),
-      paidPrice: buyPriceCorrected.toFixed(2),
-      sellPriceSingle: singleSellPrice.toFixed(2),
-      sellPrice: sellPrice.toFixed(2),
-      taxes: (taxes).toFixed(2),
-      profit: profit.toFixed(2),
+      paidPriceSingle: stockSoldInfo.price,
+      paidPrice: buyPriceCorrected,
+      sellPriceSingle: singleSellPrice,
+      sellPrice: sellPrice,
+      taxes: (taxes),
+      profit: profit,
       proportionalProfit: `${((profit / buyPriceCorrected) * 100).toFixed(2)}%`
     };
 
