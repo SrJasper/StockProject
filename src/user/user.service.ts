@@ -80,11 +80,10 @@ export class UsersService {
   */
   async update(updateUserDto: UpdateUserDto, user: IUser) {
     if(!user){
-      throw new BadRequestException('Usuário não encontrado');
+      throw new BadRequestException('Você não está logado');
     }
 
     let userName: string;
-    console.log(updateUserDto.name);
     if(updateUserDto.name){
       userName = updateUserDto.name;
     } else{ 

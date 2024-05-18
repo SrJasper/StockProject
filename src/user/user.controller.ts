@@ -30,7 +30,8 @@ export class UsersController {
 
   @Patch('/patch')
   update(
-    @Body() updateUserDto: UpdateUserDto, @Req() req: Request
+    @Body() updateUserDto: UpdateUserDto, 
+    @Req() req: Request
   ) {    
     return this.usersService.update(updateUserDto, req.user);
   }
