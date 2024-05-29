@@ -13,17 +13,23 @@ export async function findStockBr(symbol:string): Promise <any> {
 
 export async function findInflation(date1raw: Date, date2raw: Date, value: number){
 
-  
-  const monthOne = date1raw.getMonth();
-  const yearOne = date1raw.getFullYear();
-  const formattedMonthOne = monthOne < 10 ? `0${monthOne}` : monthOne;
-  const date1 = (`${yearOne}${formattedMonthOne}`);
+  const date1string = date1raw.toISOString();
+  const date2string = date2raw.toISOString();
+
+  const date1 = date1string.slice(0, 4) + date1string.slice(5, 7);
+  const date2 = date2string.slice(0, 4) + date2string.slice(5, 7);
+  console.log(date1, date2);  
+
+  // const monthOne = date1raw.getMonth();
+  // const yearOne = date1raw.getFullYear();
+  // const formattedMonthOne = monthOne < 10 ? `0${monthOne}` : monthOne;
+  // const date1 = (`${yearOne}${formattedMonthOne}`);
  
-  const dateTwo = new Date();
-  const monthTwo = date2raw.getMonth();
-  const yearTwo = date2raw.getFullYear();
-  const formattedMonthTwo = monthTwo < 10 ? `0${monthTwo}` : monthTwo;
-  const date2 = (`${yearTwo}${formattedMonthTwo}`);
+  // const dateTwo = new Date();
+  // const monthTwo = date2raw.getMonth();
+  // const yearTwo = date2raw.getFullYear();
+  // const formattedMonthTwo = monthTwo < 10 ? `0${monthTwo}` : monthTwo;
+  // const date2 = (`${yearTwo}${formattedMonthTwo}`);
 
   console.log(date1, date2);
   if(date1 === date2){

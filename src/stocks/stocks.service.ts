@@ -106,17 +106,21 @@ export class StocksService {
   */
   async serviceToFindInflation() {
     
-    const date1 = new Date('2019-05-15');
-    const date2 = new Date('2022-08-15');
-    const value = 100;
-    console.log("value: " + value);
-    const inflation = await findInflation(date1, date2, value);
-    return inflation;
+    // const date1 = new Date('2019-05-15');
+    // const date2 = new Date('2022-08-15');
+    // const value = 100;
+    // console.log("value: " + value);
+    // const inflation = await findInflation(date1, date2, value);
+    // return inflation;
   }
 
   async sellStockInfo(user: IUser, stockBodyInfo: SellStockDto) {
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
+    } 
+    
+    if(stockBodyInfo.provents === undefined){
+      stockBodyInfo.provents = 0;
     }
 
     //Pegando as infos da ação pelo DB
