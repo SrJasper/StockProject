@@ -144,9 +144,12 @@ export class StocksService {
       singleSellPrice = (response.data.results[0].regularMarketPrice);
       sellPrice = singleSellPrice * stockSoldInfo.qnt;
       
+      console.log('date1: ' + stockSoldInfo.operationDate+ '\ndate2: ' + new Date());
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, new Date(), buyPriceRaw);
     } else {//via body
       sellPrice = stockBodyInfo.sellPrice;
+      
+      console.log('date1: ' + stockSoldInfo.operationDate+ '\ndate2: ' + stockBodyInfo.date);
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, stockBodyInfo.date, buyPriceRaw);
     }
 
