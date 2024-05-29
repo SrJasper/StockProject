@@ -161,7 +161,7 @@ export class StocksService {
       taxes = 0;
     }
     
-    const profit = (sellPrice - buyPriceCorrected - taxes);
+    const profit = (sellPrice - buyPriceCorrected - taxes + stockBodyInfo.provents);
 
     //É preciso completar esses dados
     const result = {
