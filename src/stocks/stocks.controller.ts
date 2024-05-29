@@ -19,9 +19,9 @@ export class StocksController {
     } 
   }
 
-  @Get('/search/inf/:value')
-  async findInf(@Param('value') value: number){
-    const inflationInfo = await this.stocksService.serviceToFindInflation(value);
+  @Get('/inf')
+  async findInf(){
+    const inflationInfo = await this.stocksService.serviceToFindInflation();
     return inflationInfo;
   }
 

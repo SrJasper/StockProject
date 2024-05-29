@@ -22,14 +22,7 @@ export class StocksService {
     return stockInfo;
   }
 
-  async serviceToFindInflation(value: number) {
-    const date1 = new Date('2020-01-01');
-    const date2 = new Date('2023-01-01');
-    console.log('date 1: ' + date1 + '\nHora de entrar no findInflation');
-    const inflation = await findInflation(date1, date2);
-    console.log(inflation);
-    return value;
-  }
+  
 
   async findOneStock(symbol: string, user: IUser) {
     const stocks = await this.databaseService.stock.findMany({
@@ -111,7 +104,17 @@ export class StocksService {
   venda: number
   proventos: number
   */
-  async sellStockInfo(user: IUser, stockInfo: SellStockDto) {
+  async serviceToFindInflation() {
+    
+    const date1 = new Date('2019-05-15');
+    const date2 = new Date('2022-08-15');
+    const value = 100;
+    console.log("value: " + value);
+    const inflation = await findInflation(date1, date2, value);
+    return inflation;
+  }
+
+  async sellStockInfo(user: IUser, stockBodyInfo: SellStockDto) {
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
     }
@@ -119,7 +122,7 @@ export class StocksService {
     //Pegando as infos da ação pelo DB
     const stockSoldInfo = await this.databaseService.stock.findUnique({
       where: {
-        id: stockInfo.id, //puxado do site
+        id: stockBodyInfo.id, //puxado do site
         ownerId: user.id
       }
     });
@@ -128,24 +131,33 @@ export class StocksService {
     }
 
     const buyPriceRaw = stockSoldInfo.price * stockSoldInfo.qnt;
-    //metodo para corrigir o valor (compra)  EXEMPLO -----------------------------------------
-    const buyPriceCorrected = buyPriceRaw * 1.15;
-    //----------------------------------------------------------------------------------------
+    
+    console.log(new Date());
+    console.log(stockSoldInfo.operationDate);
 
-    //Obtendo o valor de venda
-    //Via simulação
+    //Obtendo valor da ação na venda
     let sellPrice: number;
     let singleSellPrice: number
-    if (stockSoldInfo.simulation) { //da API
+    let buyPriceCorrected: number;
+    if (stockSoldInfo.simulation) { //via API
       const response = await findStockBr(stockSoldInfo.symbol);
       singleSellPrice = (response.data.results[0].regularMarketPrice);
       sellPrice = singleSellPrice * stockSoldInfo.qnt;
-    } else {//do body
-      sellPrice = stockInfo.sellPrice;
+      
+      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, new Date(), buyPriceRaw);
+    } else {//via body
+      sellPrice = stockBodyInfo.sellPrice;
+      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, stockBodyInfo.date, buyPriceRaw);
     }
 
     //const profit = (sellPrice + stockInfo.provents - buyPriceCorrected);
-    const taxes = (sellPrice - buyPriceCorrected) * 0.15;
+    let taxes: number;
+    if(sellPrice > 20000){
+      taxes = (sellPrice - buyPriceCorrected) * 0.15;
+    } else{ 
+      taxes = 0;
+    }
+    
     const profit = (sellPrice - buyPriceCorrected - taxes);
 
     //É preciso completar esses dados
