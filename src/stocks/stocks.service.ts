@@ -136,9 +136,6 @@ export class StocksService {
 
     const buyPriceRaw = stockSoldInfo.price * stockSoldInfo.qnt;
     
-    console.log(new Date());
-    console.log(stockSoldInfo.operationDate);
-
     //Obtendo valor da ação na venda
     let sellPrice: number;
     let singleSellPrice: number
@@ -148,14 +145,11 @@ export class StocksService {
       singleSellPrice = (response.data.results[0].regularMarketPrice);
       sellPrice = singleSellPrice * stockSoldInfo.qnt;
       
-      console.log('date1: ' + stockSoldInfo.operationDate+ '\ndate2: ' + new Date());
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, new Date(), buyPriceRaw);
     } else {//via body
-      console.log(stockBodyInfo.sellPrice);
       sellPrice = stockBodyInfo.sellPrice * stockSoldInfo.qnt;
       const dateRegBuy = stockBodyInfo.date === undefined ? new Date() : stockBodyInfo.date;
       
-      console.log('date1: ' + stockSoldInfo.operationDate+ '\ndate2: ' + stockBodyInfo.date);
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, dateRegBuy, buyPriceRaw);
     }
 

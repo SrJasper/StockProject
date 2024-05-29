@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import axios from 'axios';
+import { stringify } from 'querystring';
 
 export async function findStockBr(symbol:string): Promise <any> {
   const brapiKey = process.env.BRAPI_KEY;
@@ -11,7 +12,10 @@ export async function findStockBr(symbol:string): Promise <any> {
   }
 }
 
-export async function findInflation(date1raw: Date, date2raw: Date, value: number){
+export async function findInflation(date1fromBody: Date, date2fromBody: Date, value: number){
+
+  let date1raw = new Date(date1fromBody);
+  let date2raw = new Date(date2fromBody);
 
   const date1string = date1raw.toISOString();
   const date2string = date2raw.toISOString();
@@ -20,18 +24,7 @@ export async function findInflation(date1raw: Date, date2raw: Date, value: numbe
   const date2 = date2string.slice(0, 4) + date2string.slice(5, 7);
   console.log(date1, date2);  
 
-  // const monthOne = date1raw.getMonth();
-  // const yearOne = date1raw.getFullYear();
-  // const formattedMonthOne = monthOne < 10 ? `0${monthOne}` : monthOne;
-  // const date1 = (`${yearOne}${formattedMonthOne}`);
- 
-  // const dateTwo = new Date();
-  // const monthTwo = date2raw.getMonth();
-  // const yearTwo = date2raw.getFullYear();
-  // const formattedMonthTwo = monthTwo < 10 ? `0${monthTwo}` : monthTwo;
-  // const date2 = (`${yearTwo}${formattedMonthTwo}`);
-
-  console.log(date1, date2);
+  console.log("datas: ", date1, date2);
   if(date1 === date2){
     console.log('datas iguiais');
     return value;
