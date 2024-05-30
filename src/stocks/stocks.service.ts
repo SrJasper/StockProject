@@ -143,13 +143,21 @@ export class StocksService {
       const response = await findStockBr(stockSoldInfo.symbol);
       singleSellPrice = (response.data.results[0].regularMarketPrice);
       sellPrice = singleSellPrice * stockSoldInfo.qnt;
-      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, new Date(stockBodyInfo.date.getFullYear(), stockBodyInfo.date.getMonth() - 1, stockBodyInfo.date.getDate()), buyPriceRaw);
+      const currentDate = new Date();
+      const newDateSim = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
+      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, newDateSim, buyPriceRaw);
     } else {//via body      
       //console.log('operation date do body: ' + stockSoldInfo.operationDate);
       sellPrice = stockBodyInfo.sellPrice * stockSoldInfo.qnt;
-      const dateRegBuy = stockBodyInfo.date === undefined ? new Date() : new Date(stockBodyInfo.date.getFullYear(), stockBodyInfo.date.getMonth() - 1, stockBodyInfo.date.getDate());
+      let newDateReg:Date;
+      if(stockBodyInfo.date === undefined){
+        const currentDate = new Date();
+        newDateReg = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
+      } else{
+        newDateReg = new Date(stockBodyInfo.date);
+      }
+      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, newDateReg, buyPriceRaw);
       //console.log('opration.date a ser passada para a request: ' + dateRegBuy);
-      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, dateRegBuy, buyPriceRaw);
     }
 
     //const profit = (sellPrice + stockInfo.provents - buyPriceCorrected);
