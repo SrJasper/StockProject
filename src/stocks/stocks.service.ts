@@ -143,11 +143,11 @@ export class StocksService {
       const response = await findStockBr(stockSoldInfo.symbol);
       singleSellPrice = (response.data.results[0].regularMarketPrice);
       sellPrice = singleSellPrice * stockSoldInfo.qnt;
-      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, new Date(), buyPriceRaw);
+      buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, new Date(stockBodyInfo.date.getFullYear(), stockBodyInfo.date.getMonth() - 1, stockBodyInfo.date.getDate()), buyPriceRaw);
     } else {//via body      
       //console.log('operation date do body: ' + stockSoldInfo.operationDate);
       sellPrice = stockBodyInfo.sellPrice * stockSoldInfo.qnt;
-      const dateRegBuy = stockBodyInfo.date === undefined ? new Date() : stockBodyInfo.date;      
+      const dateRegBuy = stockBodyInfo.date === undefined ? new Date() : new Date(stockBodyInfo.date.getFullYear(), stockBodyInfo.date.getMonth() - 1, stockBodyInfo.date.getDate());
       //console.log('opration.date a ser passada para a request: ' + dateRegBuy);
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, dateRegBuy, buyPriceRaw);
     }
