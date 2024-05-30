@@ -15,9 +15,11 @@ export async function findStockBr(symbol:string): Promise <any> {
 export async function findInflation(date1fromBody: Date, date2fromBody: Date, value: number){
 
   let date1raw = new Date(date1fromBody);
+
   let date2raw = new Date(date2fromBody);
 
   const date1string = date1raw.toISOString();
+  date2raw.setMonth(date2raw.getMonth() - 1);
   const date2string = date2raw.toISOString();
 
   const date1 = date1string.slice(0, 4) + date1string.slice(5, 7);
