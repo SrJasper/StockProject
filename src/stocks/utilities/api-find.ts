@@ -22,15 +22,27 @@ export async function findInflation(date1fromBody: Date, date2fromBody: Date, va
   date2raw.setMonth(date2raw.getMonth());
   const date2string = date2raw.toISOString();
 
-  const date1 = date1string.slice(0, 4) + date1string.slice(5, 7);
-  const date2 = date2string.slice(0, 4) + date2string.slice(5, 7);
+  let date1 = date1string.slice(0, 4) + date1string.slice(5, 7);
+  let date2 = date2string.slice(0, 4) + date2string.slice(5, 7);
+
+  const today = new Date();
+  const todayMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+  const todayYear = today.getFullYear().toString();
+  const todayFormatted = todayYear + todayMonth;
 
   if(date1 === date2 || date2 < date1){
     console.log('datas iguiais');
     return value;
   }
 
-  console.log(date1raw, date2raw); 
+  if (todayFormatted == date1) {
+    date1 = (parseInt(date1) - 1).toString().padStart(6, '0');
+  }
+  if (todayFormatted == date2) {
+    date2 = (parseInt(date2) - 1).toString().padStart(6, '0');
+  }
+  
+  console.log(date1, date2);
 
   const res = await axios.get(`https://apisidra.ibge.gov.br/values/t/1737/p/${date1}, ${date2}/v/2266/n1/1`);
   const v1 = res.data[1].V;
