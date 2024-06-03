@@ -39,7 +39,7 @@ export class StocksController {
       const listaAll = await this.stocksService.listStocks(req.user);
       return listaAll;
     } catch (error) {
-      throw new BadRequestException('Deu erro');
+      throw error;
     }    
   }
 

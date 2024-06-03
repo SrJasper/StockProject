@@ -37,8 +37,8 @@ export class StocksService {
   //lista todas as simulações de ação do usuário
   async listStocks(user: IUser) {
     const stocks = await this.databaseService.stock.findMany({ where: { ownerId: user.id } });
-    if (!stocks) {
-      throw new BadRequestException('Não foi encontrada nenhuma simulação de ação sendo feita');
+    if (stocks.length === 0) {
+      throw new BadRequestException('Não foi encontrada nenhuma ação');
     }
     return stocks;
   }
