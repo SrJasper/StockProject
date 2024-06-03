@@ -44,17 +44,21 @@ export async function findInflation(date1fromBody: Date, date2fromBody: Date, va
   
   console.log(date1, date2);
 
-  const res = await axios.get(`https://apisidra.ibge.gov.br/values/t/1737/p/${date1}, ${date2}/v/2266/n1/1`);
-  const v1 = res.data[1].V;
-  const v2 = res.data[2].V;
-  let inflation: number;
-  if(v1 > v2){
-    inflation = v1 / v2;
-  } else {
-    inflation = v2 / v1;
+  try {    
+    const res = await axios.get(`https://apisidra.ibge.gov.br/values/t/1737/p/${date1}, ${date2}/v/2266/n1/1`);
+    const v1 = res.data[1].V;
+    const v2 = res.data[2].V;
+    let inflation: number;
+    if(v1 > v2){
+      inflation = v1 / v2;
+    } else {
+      inflation = v2 / v1;
+    }
+    const correctdValue = value * inflation;
+    return correctdValue;
+  } catch (error) {
+    return value;
   }
-  const correctdValue = value * inflation;
-  return correctdValue;
 }
 
 export function getDate(date: Date){
