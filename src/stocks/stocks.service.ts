@@ -11,18 +11,19 @@ export class StocksService {
   constructor(private readonly databaseService: DatabaseService) { }
 
   //Busca uma ação na API
-  async findOne(symbol: string) {
+  async searchStock(symbol: string) {
     const response = await findStockBr(symbol);
     if (!response) {
       throw new BadRequestException('Símbolo não encontrado');
     }
     const { regularMarketPrice } = response.data.results[0];
     const { longName } = response.data.results[0];
-    const stockInfo = { Symbol: symbol, LongName: longName, Price: regularMarketPrice };
+    const { currency } = response.data.results[0];
+    const stockInfo = { Symbol: symbol, LongName: longName, Price: regularMarketPrice, Currency: currency };
     return stockInfo;
   }
 
-  
+
 
   async findOneStock(symbol: string, user: IUser) {
     const stocks = await this.databaseService.stock.findMany({
@@ -38,7 +39,7 @@ export class StocksService {
   async listStocks(user: IUser) {
     const stocks = await this.databaseService.stock.findMany({ where: { ownerId: user.id } });
     if (stocks.length === 0) {
-      throw new BadRequestException('Não foi encontrada nenhuma ação');
+      return null;
     }
     return stocks;
   }
@@ -49,7 +50,7 @@ export class StocksService {
       if (!user.id) {
         throw new BadRequestException('Usuário não está logado');
       }
-      const opDate: Date = new Date(registerStockDto.operationDate+"T01:01:01.001Z");
+      const opDate: Date = new Date(registerStockDto.operationDate + "T01:01:01.001Z");
       const newStock = await this.databaseService.stock.create({
         data: {
           ownerId: user.id,
@@ -105,7 +106,7 @@ export class StocksService {
   proventos: number
   */
   async serviceToFindInflation() {
-    
+
     // const date1 = new Date('2019-05-15');
     // const date2 = new Date('2022-08-15');
     // const value = 100;
@@ -117,8 +118,8 @@ export class StocksService {
   async sellStockInfo(user: IUser, stockBodyInfo: SellStockDto) {
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
-    } 
-    if(stockBodyInfo.provents === undefined){
+    }
+    if (stockBodyInfo.provents === undefined) {
       stockBodyInfo.provents = 0;
     }
 
@@ -134,7 +135,7 @@ export class StocksService {
     }
 
     const buyPriceRaw = stockSoldInfo.price * stockSoldInfo.qnt;
-    
+
     //Obtendo valor da ação na venda
     let sellPrice: number;
     let singleSellPrice: number
@@ -149,11 +150,11 @@ export class StocksService {
     } else {//via body      
       //console.log('operation date do body: ' + stockSoldInfo.operationDate);
       sellPrice = stockBodyInfo.sellPrice * stockSoldInfo.qnt;
-      let newDateReg:Date;
-      if(stockBodyInfo.date === undefined){
+      let newDateReg: Date;
+      if (stockBodyInfo.date === undefined) {
         const currentDate = new Date();
         newDateReg = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
-      } else{
+      } else {
         newDateReg = new Date(stockBodyInfo.date);
       }
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, newDateReg, buyPriceRaw);
@@ -162,12 +163,12 @@ export class StocksService {
 
     //const profit = (sellPrice + stockInfo.provents - buyPriceCorrected);
     let taxes: number;
-    if(sellPrice > 20000){
+    if (sellPrice > 20000) {
       taxes = (sellPrice - buyPriceCorrected) * 0.15;
-    } else{ 
+    } else {
       taxes = 0;
     }
-    
+
     const profit = (sellPrice - buyPriceCorrected - taxes + stockBodyInfo.provents);
 
     //É preciso completar esses dados

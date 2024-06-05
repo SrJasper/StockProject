@@ -1,52 +1,52 @@
-import { Controller, Get, Post, Param, Req, Body, Delete, BadRequestException} from '@nestjs/common';
+import { Controller, Get, Post, Param, Req, Body, Delete, BadRequestException } from '@nestjs/common';
 import { RegisterStockDto } from './dto/register-stock.dto';
 import { SimStockDto } from './dto/simulation-stock.dto';
 import { SellStockDto } from './dto/sell-stock.dto';
 import { StocksService } from './stocks.service';
 import { Request } from 'express';
-   
+
 @Controller('stocks')
 export class StocksController {
-  constructor(private readonly stocksService: StocksService) {}
-   
+  constructor(private readonly stocksService: StocksService) { }
+
   @Get('/search/:symbol')
-  async findOne(@Param('symbol') symbol: string) {   
+  async findOne(@Param('symbol') symbol: string) {
     try {
-      const stockInfo = await this.stocksService.findOne(symbol);
-      return stockInfo; 
+      const stockInfo = await this.stocksService.searchStock(symbol);
+      return stockInfo;
     } catch (error) {
       return 'not found';
-    } 
+    }
   }
 
   @Get('/inf')
-  async findInf(){
+  async findInf() {
     const inflationInfo = await this.stocksService.serviceToFindInflation();
     return inflationInfo;
   }
 
   @Get('list/:symbol')
   async findOneStock(
-    @Param('symbol') symbol: string, 
-    @Req()req: Request){
+    @Param('symbol') symbol: string,
+    @Req() req: Request) {
     const listBySymbol = await this.stocksService.findOneStock(symbol, req.user);
     return listBySymbol;
   }
 
   @Get('listall')
-  async listStocks(@Req()req: Request,){
+  async listStocks(@Req() req: Request,) {
     try {
       const listaAll = await this.stocksService.listStocks(req.user);
       return listaAll;
     } catch (error) {
       throw error;
-    }    
+    }
   }
 
   @Post('/regsim')
   async registerStock(
     @Body() registerStockDto: RegisterStockDto,
-    @Req()req: Request
+    @Req() req: Request
   ) {
     const stockRegister = await this.stocksService.registerStock(registerStockDto, req.user);
     return stockRegister;
@@ -55,7 +55,7 @@ export class StocksController {
   @Post('/newsim')
   async simStock(
     @Body() simStockDto: SimStockDto,
-    @Req()req: Request
+    @Req() req: Request
   ) {
     const stockBought = await this.stocksService.simStock(simStockDto, req.user);
     return stockBought;
@@ -74,16 +74,16 @@ export class StocksController {
 
   @Post('/sell')
   async sellStock(
-    @Req()req: Request,
+    @Req() req: Request,
     @Body() stockInfo: SellStockDto
-  ){
+  ) {
     const stocSold = await this.stocksService.sellStockInfo(req.user, stockInfo)
     return stocSold;
   }
 
   @Delete('/delone/:id')
-  async deleteStock (
-    @Req()req: Request,
+  async deleteStock(
+    @Req() req: Request,
     @Param('id') id: string
   ) {
     const simDeleted = await this.stocksService.deleteOneStock(req.user, id)
@@ -91,15 +91,15 @@ export class StocksController {
   }
 
   @Delete('/dellall')
-  async deleteAllSims (
-    @Req()req: Request
+  async deleteAllSims(
+    @Req() req: Request
   ) {
     const simDeleted = await this.stocksService.deleteAllStocks(req.user)
     return simDeleted;
   }
 
   @Delete('/all')
-  async clearUserStocks(@Req()req: Request){
+  async clearUserStocks(@Req() req: Request) {
     const clearUser = await this.stocksService.clearUserStocks(req.user);
     return clearUser;
   }
