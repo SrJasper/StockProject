@@ -16,6 +16,9 @@ export class StocksService {
     if (!response) {
       throw new BadRequestException('Símbolo não encontrado');
     }
+    if(response.data.results[0].currency === null){
+      throw new BadRequestException('Símbolo não encontrado');
+    }
     const { regularMarketPrice } = response.data.results[0];
     const { longName } = response.data.results[0];
     const { currency } = response.data.results[0];
