@@ -11,8 +11,8 @@ export class UsersController {
   @Get('info/')
   async userInfo(@Req()req: Request,){
     try {
-      const listaOne = await this.usersService.userInfo(req.user);
-      return listaOne;
+      const listOne = await this.usersService.userInfo(req.user);
+      return listOne;
     } catch (error) {
       throw new BadRequestException('Deu erro');
     }    

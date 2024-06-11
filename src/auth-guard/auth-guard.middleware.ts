@@ -32,9 +32,9 @@ export class AuthGuardMiddleware implements NestMiddleware {
         throw new BadRequestException('Token não é valido! Refaça a autenticação para continuar!')
       }
 
-      const {id, name, email, password} = await this.db.user.findUnique({where: {id: decodedToken.userId}})
+      const {id, name, language, email, password} = await this.db.user.findUnique({where: {id: decodedToken.userId}})
 
-      req.user = {id, name, email, password}
+      req.user = {id, name, language, email, password}
       next();
     })
   }

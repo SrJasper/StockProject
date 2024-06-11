@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { genSalt, hash } from 'bcryptjs'
+import { genSalt, hash } from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IUser } from 'src/interfaces/IUser';
@@ -8,14 +8,16 @@ import { EmailService } from 'src/email.service';
 
 @Injectable()
 export class UsersService {
-
-
-
-  constructor(private readonly databaseService: DatabaseService, private readonly mail: EmailService) { }
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly mail: EmailService,
+  ) {}
 
   async userInfo(user: IUser) {
     try {
-      const findUser = await this.databaseService.user.findUnique({ where: { id: user.id } });
+      const findUser = await this.databaseService.user.findUnique({
+        where: { id: user.id },
+      });
       return findUser;
     } catch (error) {
       throw new BadRequestException('Usuário não encontrado');
@@ -27,12 +29,16 @@ export class UsersService {
     const salt = await genSalt(10);
     const passHash = await hash(createUserDto.password, salt);
 
-    const newUser = await this.databaseService.user.findUnique({ where: { email: createUserDto.email } });
+    const newUser = await this.databaseService.user.findUnique({
+      where: { email: createUserDto.email },
+    });
     if (newUser) {
       throw new BadRequestException('O e-mail colocado já está cadastrado');
     } else {
       if (createUserDto.password !== confirmPassword) {
-        throw new BadRequestException('A senha e a confirmação de senha não coincidem.');
+        throw new BadRequestException(
+          'A senha e a confirmação de senha não coincidem.',
+        );
       }
     }
 
@@ -50,8 +56,9 @@ export class UsersService {
   }
 
   async recovery(updateUserDto: UpdateUserDto) {
-
-    const userDB = await this.databaseService.user.findUnique({ where: { email: updateUserDto.email } });
+    const userDB = await this.databaseService.user.findUnique({
+      where: { email: updateUserDto.email },
+    });
     if (userDB) {
       const newPassword = Math.random().toString(36).slice(-8);
       const salt = await genSalt(10);
@@ -63,13 +70,16 @@ export class UsersService {
         },
       });
 
-      await this.mail.sendEmail(updateUserDto.email, 'Recuperação de senha', 'Sua nova senha é: ' + newPassword);
+      await this.mail.sendEmail(
+        updateUserDto.email,
+        'Recuperação de senha',
+        'Sua nova senha é: ' + newPassword,
+      );
       return 'A senha do usuário ' + updateUserDto.email + ' foi alterada';
     } else {
       throw new BadRequestException('O usuário não foi encontrado');
     }
   }
-
 
   /*
   @Body
@@ -79,42 +89,63 @@ export class UsersService {
   admin?: boolean
   */
   async update(updateUserDto: UpdateUserDto, user: IUser) {
-    if(!user){
+    if (!user) {
       throw new BadRequestException('Você não está logado');
     }
 
     let userName: string;
-    if(updateUserDto.name){
+    if (updateUserDto.name) {
       userName = updateUserDto.name;
-    } else{ 
+    } else {
       userName = user.name;
     }
+
+    let language: string;
+    if (updateUserDto.language) {
+      language = updateUserDto.language;
+    } else {
+      language = user.language;
+    }
     
-    const userDB = await this.databaseService.user.findUnique({ where: { id: user.id } });
-    if (userDB) {
+    const userDB = await this.databaseService.user.findUnique({
+      where: { id: user.id },
+    });
+    
+    let passHash: string;
+    if(updateUserDto.password){
       const salt = await genSalt(10);
-      const passHash = await hash(updateUserDto.password, salt);
+      passHash = await hash(updateUserDto.password, salt);
+    } else { 
+      passHash = userDB.password;
+    }
+
+    if (userDB) {
       await this.databaseService.user.update({
         where: { id: user.id },
         data: {
           name: userName,
+          language: language,
           password: passHash,
         },
       });
-      return 'O seu usuário foi alterado\n' + updateUserDto.name;
+      return 'O seu usuário foi alterado\n' + userName;
     } else {
       throw new BadRequestException('O usuário não foi encontrado');
     }
   }
 
   async remove(id: number) {
-    const userDb = await this.databaseService.user.findUnique({ where: { id } });
+    const userDb = await this.databaseService.user.findUnique({
+      where: { id },
+    });
 
     if (userDb) {
       await this.databaseService.user.delete({ where: { id } });
       return 'usuário deletado';
     } else {
-      throw new BadRequestException('Nenhum usuário cadastrado com o id: ' + id);
+      throw new BadRequestException(
+        'Nenhum usuário cadastrado com o id: ' + id,
+      );
     }
   }
 }
