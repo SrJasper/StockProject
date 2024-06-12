@@ -12,7 +12,9 @@ export class StocksService {
 
   //Busca uma ação na API
   async searchStock(symbol: string) {
+    console.log('symbol: ', symbol);
     const response = await findStockBr(symbol);
+    console.log('response: ', response.data.results[0]);
     if (!response) {
       throw new BadRequestException('Símbolo não encontrado');
     }
@@ -144,9 +146,15 @@ export class StocksService {
     let singleSellPrice: number
     let buyPriceCorrected: number;
     if (stockSoldInfo.simulation) { //via API
-      const response = await findStockBr(stockSoldInfo.symbol);
-      singleSellPrice = (response.data.results[0].regularMarketPrice);
-      sellPrice = singleSellPrice * stockSoldInfo.qnt;
+      console.log('symbol: ', stockSoldInfo.symbol)
+      const response = await findStockBr(stockSoldInfo.symbol);//pode ser undefined
+      console.log('valor da stock: ', response.data.results[0].regularMarketPrice);
+      if(!response.data.results[0].regularMarketPrice){
+        sellPrice = 0;
+      } else {
+        singleSellPrice = (response.data.results[0].regularMarketPrice);
+        sellPrice = singleSellPrice * stockSoldInfo.qnt;
+      }
       const currentDate = new Date();
       const newDateSim = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
       buyPriceCorrected = await findInflation(stockSoldInfo.operationDate, newDateSim, buyPriceRaw);
@@ -195,7 +203,6 @@ export class StocksService {
       throw new BadRequestException('Usuário não está logado');
     }
     const product = await this.databaseService.stock.findUnique({ where: { id: parseInt(id) } });
-    console.log(product);
     if (product) {
       await this.databaseService.stock.delete({ where: { id: parseInt(id) } });
     } else {
