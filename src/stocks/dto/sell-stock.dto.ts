@@ -3,6 +3,9 @@ import { IsDate, IsNumber, IsOptional } from "class-validator"
 export class SellStockDto {
   id: number;
 
+  @IsNumber({}, {message: 'Digite uma quantidade válida'})
+  qnt: number;
+
   @IsOptional()
   @IsNumber({}, {message: 'Digite um valor de venda válido'})
   sellPrice: number;

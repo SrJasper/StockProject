@@ -61,19 +61,8 @@ export class StocksController {
     return stockBought;
   }
 
-  // @Post(':symbol')
-  // async simStock(
-  //   @Body() simStockDto: SimStockDto,
-  //   @Param('symbol') symbol: string,
-  //   @Req()req: Request
-  // ) {
-  //   console.log('Entrou na rota 2');
-  //   const stockBought = await this.stocksService.simStock(simStockDto, symbol, req.user);
-  //   return stockBought;
-  // }
-
-  @Post('/sell')
-  async sellStock(
+  @Post('/sellinfo')
+  async sellStockInfo(
     @Req() req: Request,
     @Body() stockInfo: SellStockDto
   ) {
@@ -81,14 +70,15 @@ export class StocksController {
     return stocSold;
   }
 
-  @Delete('/delone/:id')
-  async deleteStock(
+  @Post('/sell')
+  async sellStock(
     @Req() req: Request,
-    @Param('id') id: string
+    @Body() stockInfo: SellStockDto
   ) {
-    const simDeleted = await this.stocksService.deleteOneStock(req.user, id)
-    return simDeleted;
+    const stocSold = await this.stocksService.sellStockController(req.user, stockInfo)
+    return stocSold;
   }
+  
 
   @Delete('/dellall')
   async deleteAllSims(

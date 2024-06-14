@@ -6,7 +6,7 @@ export async function findStockBr(symbol:string): Promise <any> {
   const brapiKey = process.env.BRAPI_KEY;
   try {    
     const response = await axios.get(`https://brapi.dev/api/quote/${symbol}?token=${brapiKey}`);
-    console.log(response.data);
+    // console.log(response.data.results[0]);
     return response;
   } catch (error) {
     throw new BadRequestException ('Símbolo não encontrado');
