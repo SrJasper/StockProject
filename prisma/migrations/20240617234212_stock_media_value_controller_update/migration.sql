@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Stock" ALTER COLUMN "media" DROP DEFAULT;

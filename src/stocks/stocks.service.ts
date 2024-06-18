@@ -5,7 +5,7 @@ import { RegisterStockDto } from './dto/register-stock.dto';
 import { SimStockDto } from './dto/simulation-stock.dto';
 import { SellStockDto } from './dto/sell-stock.dto';
 import { IUser } from 'src/interfaces/IUser';
-import { response } from 'express';
+import { Stock } from '@prisma/client';
 
 @Injectable()
 export class StocksService {
@@ -53,6 +53,43 @@ export class StocksService {
     return stocks;
   }
 
+  async findMediaStock(user: IUser, symbol: any) {
+    symbol = symbol.toUpperCase();
+    const stockList = await this.databaseService.stock.findMany({
+      where: {
+        symbol: symbol,
+        ownerId: user.id,
+      },
+    });
+    const stockMedia = stockList.find((stock) => stock.media === true);
+    console.log('stockExist: ', stockMedia); 
+    return stockMedia;
+  }
+
+  async createStockController(stockMedia: Stock, data:any, simulation:boolean){
+    if(stockMedia === undefined){
+      await this.databaseService.stock.create({
+        data: {...data, simulation:simulation, media: false}
+      });
+      await this.databaseService.stock.create({
+        data: {...data, simulation:simulation, media:true}
+      });
+      return 'Nenhuma ação registrada, duas novas ações foram registradas';
+    } else {
+      await this.databaseService.stock.update({
+        where: { id: stockMedia.id },
+        data: {
+          price: (stockMedia.price * stockMedia.qnt + data.price * data.qnt)/(stockMedia.qnt + data.qnt),
+          qnt: stockMedia.qnt + data.qnt,
+        },
+      });
+      await this.databaseService.stock.create({
+        data: {...data, simulation:simulation, media: false}  
+      });
+      return 'Ação encontrada! Nova ação adicionada ao extrato';
+    }
+  }
+
   //Faz um registro de ação
   async registerStock(registerStockDto: RegisterStockDto, user: IUser) {
     try {
@@ -62,23 +99,23 @@ export class StocksService {
       const opDate: Date = new Date(
         registerStockDto.operationDate + 'T01:01:01.001Z',
       );
-      const newStock = await this.databaseService.stock.create({
-        data: {
-          ownerId: user.id,
-          symbol: registerStockDto.symbol,
-          qnt: registerStockDto.qnt,
-          price: registerStockDto.price,
-          longName: registerStockDto.longName,
-          operationDate: opDate,
-          simulation: false,
-        },
-      });
 
-      return newStock;
+      const data = {
+        ownerId: user.id,
+        symbol: (registerStockDto.symbol).toUpperCase(),
+        qnt: registerStockDto.qnt,
+        price: registerStockDto.price,
+        longName: registerStockDto.longName,
+        operationDate: opDate,
+        media: false
+      };
+
+      const stockMedia = await this.findMediaStock(user, registerStockDto.symbol);
+      this.createStockController(stockMedia, data, false);     
+      
+      return 'Ação registrada com sucesso';
     } catch (error) {
-      throw new BadRequestException(
-        'Não foi possivel fazer o registro de compra',
-      );
+      throw new BadRequestException(error);
     }
   }
 
@@ -87,22 +124,22 @@ export class StocksService {
       if (!user.id) {
         throw new BadRequestException('Usuário não está logado');
       }
+      const data = {
+        symbol: simStockDto.symbol,
+        longName: simStockDto.longName,
+        price: simStockDto.price,
+        qnt: simStockDto.qnt,
+        ownerId: user.id,
+        media: false
+      }
 
-      const newStock = await this.databaseService.stock.create({
-        data: {
-          symbol: simStockDto.symbol,
-          longName: simStockDto.longName,
-          price: simStockDto.price,
-          qnt: simStockDto.qnt,
-          ownerId: user.id,
-          simulation: true,
-        },
-      });
-      return newStock;
+      const stockMedia = await this.findMediaStock(user, simStockDto.symbol);
+      this.createStockController(stockMedia, data, true);
+
+
+      return 'Ação simulada com sucesso';
     } catch (error) {
-      throw new BadRequestException(
-        'Não foi possivel fazer a simulação de compra',
-      );
+      throw new BadRequestException(error);
     }
   }
 

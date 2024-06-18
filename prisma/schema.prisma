@@ -22,6 +22,7 @@ model Stock {
   longName       String
   price          Float
   qnt            Int
-  ownerId        Float
+  ownerId        Float  
   simulation     Boolean?
+  media          Boolean
 }
