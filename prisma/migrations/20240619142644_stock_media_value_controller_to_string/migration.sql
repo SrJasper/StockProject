@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Stock" ALTER COLUMN "media" SET DATA TYPE TEXT;

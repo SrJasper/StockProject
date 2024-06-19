@@ -6,6 +6,7 @@ import { SimStockDto } from './dto/simulation-stock.dto';
 import { SellStockDto } from './dto/sell-stock.dto';
 import { IUser } from 'src/interfaces/IUser';
 import { Stock } from '@prisma/client';
+import { DellStockDto } from './dto/dell-stock.dto';
 
 @Injectable()
 export class StocksService {
@@ -45,7 +46,10 @@ export class StocksService {
   //lista todas as simulações de ação do usuário
   async listStocks(user: IUser) {
     const stocks = await this.databaseService.stock.findMany({
-      where: { ownerId: user.id },
+      where: { ownerId: user.id, OR: [
+        { type: 'media' },
+        { simulation: true }
+      ]},
     });
     if (stocks.length === 0) {
       return null;
@@ -53,38 +57,63 @@ export class StocksService {
     return stocks;
   }
 
-  async findMediaStock(user: IUser, symbol: any) {
+ 
+
+  async listStatement(user: IUser, symbol: string) {
+    const stocks = await this.databaseService.stock.findMany({
+      where: {
+        ownerId: user.id,
+        symbol: symbol,
+        type: {
+          in: ['buy', 'sell'],
+        },
+        simulation: false
+      },
+    });
+    if (stocks.length === 0) {
+      return null;
+    }
+    return stocks;
+  }
+
+  async findMediaStock(user: IUser, symbol: any, simulation: boolean) {
     symbol = symbol.toUpperCase();
     const stockList = await this.databaseService.stock.findMany({
       where: {
         symbol: symbol,
         ownerId: user.id,
+        simulation: simulation,
       },
     });
-    const stockMedia = stockList.find((stock) => stock.media === true);
-    console.log('stockExist: ', stockMedia); 
+    const stockMedia = stockList.find((stock) => stock.type === 'media');
     return stockMedia;
   }
 
-  async createStockController(stockMedia: Stock, data:any, simulation:boolean){
-    if(stockMedia === undefined){
+  async createStockController(
+    stockMedia: Stock,
+    data: any,
+    simulation: boolean,
+  ) {
+    if (stockMedia === undefined) {
       await this.databaseService.stock.create({
-        data: {...data, simulation:simulation, media: false}
+        data: { ...data, simulation: simulation, type: 'buy' },
       });
       await this.databaseService.stock.create({
-        data: {...data, simulation:simulation, media:true}
+        data: { ...data, simulation: simulation, type: 'media' },
       });
       return 'Nenhuma ação registrada, duas novas ações foram registradas';
     } else {
       await this.databaseService.stock.update({
         where: { id: stockMedia.id },
         data: {
-          price: (stockMedia.price * stockMedia.qnt + data.price * data.qnt)/(stockMedia.qnt + data.qnt),
+          price:
+            (stockMedia.price * stockMedia.qnt + data.price * data.qnt) /
+            (stockMedia.qnt + data.qnt),
           qnt: stockMedia.qnt + data.qnt,
         },
       });
       await this.databaseService.stock.create({
-        data: {...data, simulation:simulation, media: false}  
+        data: { ...data, simulation: simulation, type: 'buy' },
       });
       return 'Ação encontrada! Nova ação adicionada ao extrato';
     }
@@ -102,17 +131,21 @@ export class StocksService {
 
       const data = {
         ownerId: user.id,
-        symbol: (registerStockDto.symbol).toUpperCase(),
+        symbol: registerStockDto.symbol.toUpperCase(),
         qnt: registerStockDto.qnt,
         price: registerStockDto.price,
         longName: registerStockDto.longName,
         operationDate: opDate,
-        media: false
+        type: 'buy',
       };
 
-      const stockMedia = await this.findMediaStock(user, registerStockDto.symbol);
-      this.createStockController(stockMedia, data, false);     
-      
+      const stockMedia = await this.findMediaStock(
+        user,
+        registerStockDto.symbol,
+        false
+      );
+      this.createStockController(stockMedia, data, false);
+
       return 'Ação registrada com sucesso';
     } catch (error) {
       throw new BadRequestException(error);
@@ -130,12 +163,14 @@ export class StocksService {
         price: simStockDto.price,
         qnt: simStockDto.qnt,
         ownerId: user.id,
-        media: false
-      }
+        operationDate: new Date(),
+        simulation: true,
+        type: 'buy',
+      };
 
-      const stockMedia = await this.findMediaStock(user, simStockDto.symbol);
-      this.createStockController(stockMedia, data, true);
-
+      await this.databaseService.stock.create({
+        data: data,
+      });
 
       return 'Ação simulada com sucesso';
     } catch (error) {
@@ -161,13 +196,11 @@ export class StocksService {
     // const date1 = new Date('2019-05-15');
     // const date2 = new Date('2022-08-15');
     // const value = 100;
-    // console.log("value: " + value);
     // const inflation = await findInflation(date1, date2, value);
     // return inflation;
   }
 
   async sellStockInfo(user: IUser, stockBodyInfo: SellStockDto) {
-    
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
     }
@@ -180,37 +213,27 @@ export class StocksService {
       where: {
         id: stockBodyInfo.id, //puxado do site
         ownerId: user.id,
-      },      
+      },
     });
-    
-    console.log('quantidade enviada pelo Front: ', stockBodyInfo.qnt);
-    if(stockBodyInfo.qnt === undefined){
-      stockBodyInfo.qnt = stockSoldInfo.qnt;      
-      console.log('vender tudo: ', stockBodyInfo.qnt);
+
+    if (stockBodyInfo.qnt === undefined) {
+      stockBodyInfo.qnt = stockSoldInfo.qnt;
     } else {
-      console.log('qunatidade a ser operada: ', stockBodyInfo.qnt);
     }
     if (!stockSoldInfo) {
       throw new BadRequestException('Não foi encontrada a ação');
     }
 
-    
     const buyPriceRaw = stockSoldInfo.price * stockBodyInfo.qnt;
-    
-    
+
     //Obtendo valor da ação na venda
     let sellPrice: number;
     let singleSellPrice: number;
     let buyPriceCorrected: number;
-    
-    if (stockSoldInfo.simulation) {      
+
+    if (stockSoldInfo.simulation) {
       //via API
-      console.log('symbol: ', stockSoldInfo.symbol);
       const response = await findStockBr(stockSoldInfo.symbol);
-      console.log(
-        'valor da stock: ',
-        response.data.results[0].regularMarketPrice,
-      );
       if (!response.data.results[0].regularMarketPrice) {
         sellPrice = 0;
       } else {
@@ -230,7 +253,6 @@ export class StocksService {
       );
     } else {
       //via body
-      //console.log('operation date do body: ' + stockSoldInfo.operationDate);
       sellPrice = stockBodyInfo.sellPrice * stockBodyInfo.qnt;
       let newDateReg: Date;
       if (stockBodyInfo.date === undefined) {
@@ -248,10 +270,8 @@ export class StocksService {
         newDateReg,
         buyPriceRaw,
       );
-      //console.log('opration.date a ser passada para a request: ' + dateRegBuy);
     }
 
-    //const profit = (sellPrice + stockInfo.provents - buyPriceCorrected);
     let taxes: number;
     if (sellPrice > 20000) {
       taxes = (sellPrice - buyPriceCorrected) * 0.15;
@@ -259,81 +279,148 @@ export class StocksService {
       taxes = 0;
     }
 
-    const profit = sellPrice - buyPriceCorrected - taxes + stockBodyInfo.provents;
-    
+    const profit =
+      sellPrice - buyPriceCorrected - taxes + stockBodyInfo.provents;
+
     const result = {
       stockName: stockSoldInfo.longName,
       stockSymbol: stockSoldInfo.symbol,
       paidPriceSingle: stockSoldInfo.price,
       paidPrice: buyPriceCorrected,
-      sellPriceSingle: singleSellPrice,
+      sellPriceSingle: sellPrice / stockBodyInfo.qnt,
       sellPrice: sellPrice,
       taxes: taxes,
       profit: profit,
       proportionalProfit: `${((profit / buyPriceCorrected) * 100).toFixed(2)}%`,
     };
-
-    console.log('result: ', result)
-
     return result;
   }
 
   async sellStockController(user: IUser, stockBodyInfo: SellStockDto) {
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
-    }    
-    const response = await this.databaseService.stock.findUnique({
+    }
+
+    if (stockBodyInfo.simulation) {
+      const dellStockDto: DellStockDto = {
+        symbol: stockBodyInfo.symbol,
+        simulation: stockBodyInfo.simulation,
+        id: stockBodyInfo.id
+      };
+      return this.deleteStock(dellStockDto);
+    }
+
+    const StockListToSell = await this.databaseService.stock.findMany({
       where: {
-        id: stockBodyInfo.id, //puxado do site
+        symbol: stockBodyInfo.symbol,
         ownerId: user.id,
+        simulation: false
       },
     });
 
-    if(stockBodyInfo.qnt === undefined){
-      console.log("Não tem qnt");
-      stockBodyInfo.qnt = response.qnt;
-    } else{ 
-      console.log("Tem qnt");
+    const stockMedia = StockListToSell.find((stock) => stock.type === 'media');
+
+    if (stockBodyInfo.qnt === undefined) {
+      stockBodyInfo.qnt = stockMedia.qnt;
     }
 
-    if (stockBodyInfo.qnt >= response.qnt) {
-      return this.sellAllStock(user, stockBodyInfo.id.toString());
-    } else {
-      return this.sellSomeStock(user, stockBodyInfo.id.toString(), stockBodyInfo.qnt);  
-    }
+    const price = stockMedia.price
+      ? stockMedia.price
+      : await this.searchStock(stockBodyInfo.symbol).then(
+          (stock) => stock.Price,
+        );
+
+    const date = stockBodyInfo.date ? stockBodyInfo.date : new Date();
+
+    return this.sellSomeStock(
+      user,
+      stockBodyInfo.qnt,
+      stockMedia.id,
+      price,
+      date,
+      stockMedia.simulation,
+    );
   }
 
-  async sellAllStock(user: IUser, id: string) {
+  async dellAllStock(user: IUser, stockToBeSoldList: any) {
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
     }
-    const product = await this.databaseService.stock.findUnique({
-      where: { id: parseInt(id) },
+
+    const idsToDelete = stockToBeSoldList.map((stock) => stock.id);
+    await this.databaseService.stock.deleteMany({
+      where: {
+        id: {
+          in: idsToDelete,
+        },
+      },
     });
-    if (product) {
-      await this.databaseService.stock.delete({ where: { id: parseInt(id) } });
-    } else {
-      return 'Não deu bom não';
-    }
-    return 'A simulção foi deletada';
+
+    return 'Todas as ações do simbolo selecionado foram deletadas';
   }
 
-  async sellSomeStock(user: IUser, id: string, qnt: number) {
+  async sellSomeStock(
+    user: IUser,
+    qntToSell: number,
+    id: number,
+    price: number,
+    date: Date,
+    sim: boolean,
+  ) {
     if (!user.id) {
       throw new BadRequestException('Usuário não está logado');
     }
-    const product = await this.databaseService.stock.findUnique({ where: { id: parseInt(id) } });
-    if (product) {
-      await this.databaseService.stock.update({ 
-        where: { id: parseInt(id) },
+
+    const product = await this.databaseService.stock.findUnique({
+      where: { id: id, type: 'media' },
+    });
+    const result = product.qnt - qntToSell > 0 ? product.qnt - qntToSell : 0;
+
+    if (result >= 0) {
+      await this.databaseService.stock.update({
+        where: { id: id },
         data: {
-          qnt: product.qnt - qnt,
+          qnt: result,
         },
       });
+
+      const data = {
+        ownerId: user.id,
+        symbol: product.symbol,
+        qnt: qntToSell,
+        price: price,
+        longName: product.longName,
+        operationDate: date,
+        simulation: sim,
+        type: 'sell',
+      };
+      // console.log('data: ', data);
+      await this.databaseService.stock.create({
+        data: data,
+      });
     } else {
-      return 'Não foi possivel encontrar a operação';	
+      return 'Não é possivel vender mais ações do que as que foram compradas';
     }
-    return 'Foram vendidas ' + qnt + ' ações';
+    return 'Foram vendidas ' + qntToSell + ' ações';
+  }
+
+  async deleteStock (stock: DellStockDto) {
+    console.log('stock: ', stock);
+    if(stock.simulation){
+      await this.databaseService.stock.delete({
+        where: {
+          id : stock.id
+        }
+      })  
+    } else {
+      await this.databaseService.stock.deleteMany({
+        where: {
+          symbol: stock.symbol,
+          simulation: stock.simulation
+        }
+      })
+    }
+    return 'Ação deletada com sucesso'
   }
 
   //Deleta uma simulação
@@ -346,7 +433,7 @@ export class StocksService {
         ownerId: user.id,
       },
     });
-    return 'A simulção foi deletada';
+    return 'A simulação foi deletada';
   }
 
   //Deleta todas as simulações

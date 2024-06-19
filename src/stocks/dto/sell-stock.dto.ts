@@ -2,6 +2,8 @@ import { IsDate, IsNumber, IsOptional } from "class-validator"
 
 export class SellStockDto {
   id: number;
+  symbol: string;
+  simulation: boolean;
 
   @IsNumber({}, {message: 'Digite uma quantidade válida'})
   qnt: number;
