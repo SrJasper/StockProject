@@ -46,18 +46,16 @@ export class StocksService {
   //lista todas as simulações de ação do usuário
   async listStocks(user: IUser) {
     const stocks = await this.databaseService.stock.findMany({
-      where: { ownerId: user.id, OR: [
-        { type: 'media' },
-        { simulation: true }
-      ]},
+      where: {
+        ownerId: user.id,
+        OR: [{ type: 'media' }, { simulation: true }],
+      },
     });
     if (stocks.length === 0) {
       return null;
     }
     return stocks;
   }
-
- 
 
   async listStatement(user: IUser, symbol: string) {
     const stocks = await this.databaseService.stock.findMany({
@@ -67,7 +65,7 @@ export class StocksService {
         type: {
           in: ['buy', 'sell'],
         },
-        simulation: false
+        simulation: false,
       },
     });
     if (stocks.length === 0) {
@@ -142,7 +140,7 @@ export class StocksService {
       const stockMedia = await this.findMediaStock(
         user,
         registerStockDto.symbol,
-        false
+        false,
       );
       this.createStockController(stockMedia, data, false);
 
@@ -209,7 +207,7 @@ export class StocksService {
     }
 
     //Pegando as infos da ação pelo DB
-    const stockSoldInfo = await this.databaseService.stock.findUnique({
+    const stockInfoFromDB = await this.databaseService.stock.findUnique({
       where: {
         id: stockBodyInfo.id, //puxado do site
         ownerId: user.id,
@@ -217,29 +215,46 @@ export class StocksService {
     });
 
     if (stockBodyInfo.qnt === undefined) {
-      stockBodyInfo.qnt = stockSoldInfo.qnt;
+      stockBodyInfo.qnt = stockInfoFromDB.qnt;
     } else {
     }
-    if (!stockSoldInfo) {
+    if (!stockInfoFromDB) {
       throw new BadRequestException('Não foi encontrada a ação');
     }
 
-    const buyPriceRaw = stockSoldInfo.price * stockBodyInfo.qnt;
+    let quantity: number;
+    console.log(
+      'stockBodyInfo.qnt: ',
+      stockBodyInfo.qnt,
+      'response.data.results[0].qnt: ',
+      stockInfoFromDB.qnt
+    );
+    if (stockBodyInfo.qnt <= stockInfoFromDB.qnt) {
+      quantity = stockBodyInfo.qnt;
+    } else {
+      quantity = stockInfoFromDB.qnt;
+    }
+    console.log('quantity: ', quantity);
+
+    const buyPriceRaw = stockInfoFromDB.price * quantity;
 
     //Obtendo valor da ação na venda
     let sellPrice: number;
     let singleSellPrice: number;
     let buyPriceCorrected: number;
 
-    if (stockSoldInfo.simulation) {
+    if (stockInfoFromDB.simulation) {
       //via API
-      const response = await findStockBr(stockSoldInfo.symbol);
+      const response = await findStockBr(stockInfoFromDB.symbol);
       if (!response.data.results[0].regularMarketPrice) {
         sellPrice = 0;
       } else {
         singleSellPrice = response.data.results[0].regularMarketPrice;
-        sellPrice = singleSellPrice * stockBodyInfo.qnt;
+        sellPrice = singleSellPrice * quantity;
       }
+
+      
+
       const currentDate = new Date();
       const newDateSim = new Date(
         currentDate.getFullYear(),
@@ -247,13 +262,13 @@ export class StocksService {
         currentDate.getDate(),
       );
       buyPriceCorrected = await findInflation(
-        stockSoldInfo.operationDate,
+        stockInfoFromDB.operationDate,
         newDateSim,
         buyPriceRaw,
       );
     } else {
       //via body
-      sellPrice = stockBodyInfo.sellPrice * stockBodyInfo.qnt;
+      sellPrice = stockBodyInfo.sellPrice * quantity;
       let newDateReg: Date;
       if (stockBodyInfo.date === undefined) {
         const currentDate = new Date();
@@ -266,7 +281,7 @@ export class StocksService {
         newDateReg = new Date(stockBodyInfo.date);
       }
       buyPriceCorrected = await findInflation(
-        stockSoldInfo.operationDate,
+        stockInfoFromDB.operationDate,
         newDateReg,
         buyPriceRaw,
       );
@@ -283,9 +298,9 @@ export class StocksService {
       sellPrice - buyPriceCorrected - taxes + stockBodyInfo.provents;
 
     const result = {
-      stockName: stockSoldInfo.longName,
-      stockSymbol: stockSoldInfo.symbol,
-      paidPriceSingle: stockSoldInfo.price,
+      stockName: stockInfoFromDB.longName,
+      stockSymbol: stockInfoFromDB.symbol,
+      paidPriceSingle: stockInfoFromDB.price,
       paidPrice: buyPriceCorrected,
       sellPriceSingle: sellPrice / stockBodyInfo.qnt,
       sellPrice: sellPrice,
@@ -305,7 +320,7 @@ export class StocksService {
       const dellStockDto: DellStockDto = {
         symbol: stockBodyInfo.symbol,
         simulation: stockBodyInfo.simulation,
-        id: stockBodyInfo.id
+        id: stockBodyInfo.id,
       };
       return this.deleteStock(dellStockDto);
     }
@@ -314,7 +329,7 @@ export class StocksService {
       where: {
         symbol: stockBodyInfo.symbol,
         ownerId: user.id,
-        simulation: false
+        simulation: false,
       },
     });
 
@@ -404,23 +419,23 @@ export class StocksService {
     return 'Foram vendidas ' + qntToSell + ' ações';
   }
 
-  async deleteStock (stock: DellStockDto) {
+  async deleteStock(stock: DellStockDto) {
     console.log('stock: ', stock);
-    if(stock.simulation){
+    if (stock.simulation) {
       await this.databaseService.stock.delete({
         where: {
-          id : stock.id
-        }
-      })  
+          id: stock.id,
+        },
+      });
     } else {
       await this.databaseService.stock.deleteMany({
         where: {
           symbol: stock.symbol,
-          simulation: stock.simulation
-        }
-      })
+          simulation: stock.simulation,
+        },
+      });
     }
-    return 'Ação deletada com sucesso'
+    return 'Ação deletada com sucesso';
   }
 
   //Deleta uma simulação
