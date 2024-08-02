@@ -59,7 +59,7 @@ export class UsersService {
     const userDB = await this.databaseService.user.findUnique({
       where: { email: updateUserDto.email },
     });
-    if (userDB) {
+    if (userDB && userDB.id !== 29) {
       const newPassword = Math.random().toString(36).slice(-8);
       const salt = await genSalt(10);
       const passHash = await hash(newPassword, salt);
@@ -93,9 +93,12 @@ export class UsersService {
       throw new BadRequestException('Você não está logado');
     }
 
+    let guestModifies = 0;
+
     let userName: string;
     if (updateUserDto.name) {
       userName = updateUserDto.name;
+      guestModifies++;
     } else {
       userName = user.name;
     }
@@ -109,14 +112,19 @@ export class UsersService {
     
     const userDB = await this.databaseService.user.findUnique({
       where: { id: user.id },
-    });
+    });    
     
     let passHash: string;
     if(updateUserDto.password){
       const salt = await genSalt(10);
       passHash = await hash(updateUserDto.password, salt);
+      guestModifies++;
     } else { 
       passHash = userDB.password;
+    }
+
+    if(userDB.id === 29 && guestModifies > 0){
+      throw new BadRequestException('You can only change this account language');
     }
 
     if (userDB) {
@@ -139,13 +147,15 @@ export class UsersService {
       where: { id },
     });
 
-    if (userDb) {
+    if (userDb && userDb.id !== 29) {
       await this.databaseService.user.delete({ where: { id } });
       return 'usuário deletado';
     } else {
       throw new BadRequestException(
-        'Nenhum usuário cadastrado com o id: ' + id,
+        'Não foi possível deletar o usuário'
       );
     }
   }
+
+  
 }
